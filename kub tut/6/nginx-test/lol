@@ -1,0 +1,14 @@
+https://kubernetes.io/docs/concepts/services-networking/connect-applications-service/
+kubectl apply -f ./run-my-nginx.yaml
+kubectl get pods -l run=my-nginx -o wide
+kubectl get pods -l run=my-nginx -o yaml | grep podIP
+
+
+kubectl expose deployment/my-nginx
+or
+kubectl apply -f ./network.svc
+kubectl get svc my-nginx
+kubectl get ep my-nginx
+
+https://www.net7.be/blog/article/kubernetes_ingress_bare_metal_load_balancing.html
+

@@ -1,0 +1,83 @@
+kub dashboard
+ - web dashboard; not reccomended no full func
+ - running behind (not always up to date )
+ - other kub distributers have other dashboards
+ - to get familar to kub structure
+
+minikube dashboard
+click + button to manual deploy
+
+kubectl
+-kub all about pods
+pods can have one or more containers (usally 1)
+can also have volumes
+you want to have replicated pods for reduncticy
+in order to do that kub introduces introuduces replica set 
+replica set takes care of replication
+The resource that it's all about is the deployment. 
+And all of these deployments are adding different features to the kubernetes resources.
+ So the deployment really is the application
+ deployment monitors the rplica set
+ replica set monitors the right amount of pods
+
+
+kubectl -h
+
+--what happens in container
+kubectl get 
+kubectl get -h
+kubectl get all
+ips and node names
+kubectl get all -o wide
+
+create objects
+kubectl create -h
+
+create deployment
+kubectl create deployment -h
+kubectl create deployment cmd-nginx --image=nginx
+Note: if docker image have no default run command, it will go in loop and crash
+
+autocompleation
+kubectl compleation -h
+
+YAML Files
+kubernetes resources are stored in etcd database in json
+- heart of kub
+JSON isn't very nice, so yaml is standard, you can use json too
+when using yaml in kub, api specifications are followed
+- how recsources to be created
+    kubectl explain
+- you can look docs on pods too
+    kubectl create -f myfile.yaml
+    kubectl delete -f myfile.yaml
+to generate yaml from manual way
+    kubectl get <resources> -o yaml > myfile.yaml
+
+naked pods
+- not managed by anything (individual pods)
+- in real world you want to create applications using deployments
+kubectl delete pod busybox
+- nothing will create pod again
+
+api
+- list of resources and what api they might come from
+kubectl api-resources 
+for api groups that don't have anything (default group)
+for api's other than default will need to refer in yaml
+- shows resources versions
+kubectl api-versions
+you will need to select what api versions to use in yaml. Beta ones may not be fully tested
+- allows users propertites of kub resources as documented in api
+kubectl explain
+kubectl explain pod
+    kind - api version
+    metadta - name and other metadt
+    spec - specifications
+    status - no need to do ourselfs. resource is added to HCD database and kub will montor it and will use status to do so
+
+kubectl explain pod.spec
+kubectl explain pod.spec.containers
+
+Lab
+kubectl get deployments.apps

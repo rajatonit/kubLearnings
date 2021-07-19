@@ -1,0 +1,7 @@
+Run ALl in one
+- Run one version in MiniKube
+
+minikube start --memory 4096
+
+minikube status
+kubectl get all

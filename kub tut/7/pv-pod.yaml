@@ -1,0 +1,21 @@
+kind: Pod
+apiVersion: v1
+metadata:
+   name: pv-pod
+spec:
+  volumes:
+  #internal use only
+    - name: pv-storage
+     #volume type pvc
+      persistentVolumeClaim:
+        claimName: pv-claim
+  containers:
+    - name: pv-container
+      image: nginx
+      ports:
+        - containerPort: 80
+          name: "http-server"
+      volumeMounts:
+        - mountPath: "/usr/share/nginx/html"
+          #ref the above vol
+          name: pv-storage

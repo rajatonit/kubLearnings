@@ -1,0 +1,148 @@
+ kubectl create -f volumes.yaml
+  kubectl describe pods  vol2
+ kubectl exec -it vol2 touch /test/testfile
+ kubectl exec -it vol2 -- ls -l /test/testfile
+ kubectl create -f morevolumes.yaml
+kubectl exec -it morevol2 -c centos1 -- touch /centos/testfile
+kubectl exec -it morevol2 -c centos2 -- ls -l /centos2/
+
+
+-------------------------------------------
+persistant volumes
+-pod volumes depends on pods
+to have storage outlast pod, you should have external storage
+- this can be done in pod. But dev would need to know about storage specifics
+- to decouple stroage requirments from pod dev, persistant volumes are offered
+- decouple is key
+
+-persistantVolumeClaim(pVC) used by user to claim storage in declartive way. Without worry storage specifics
+    - you just specify you need 10gb sotrage, and use seperate storage for dev and prod env
+- the persistantVolume repersents the stroage resourse in kube
+    -admins can config staticallu
+    - dynamically using storageClass
+
+- PVC: api is a spec that defines req storage properties
+    -accessModes: what type of access is req
+    - resourses: how much stroage is req
+    - storageClass: what storage class type is req
+- pvc use properties and reach out to pv to bind to specific storage
+
+PV is the kub object that defines how to connect to external storage and uses diffrent spec attributes
+    -capacity: how much storage is avalible
+    - accessMode: which access access mode
+    - storageClassName (optional): how to bind to a specific storage class 
+    - persistantVolumeReclaimPolicy: what to do when a corrisponding persistantVolumeClaim is deleted
+    - type: which storage type to use (nfs, azureDisk, gcePeresistantDisk, etc)
+
+
+starts with pod
+- in pod spec we have container, and volume 
+- vol it has name, and in persistant it has type:pvc
+- and in container we have a mount, that refers to volume name
+
+persistant volume (PV), is independent of pod 
+- connects to external storage
+- to connect to pod, you connect to pvc that has a name
+and pvc conencts to pod volume that has the pvc name
+
+the pvc is then bound to the pv and is able to read/wirte without knowing too much about where it is from
+you can use stroage classes to change pv type 
+
+--------------------------
+minikube ssh
+sudo mkdir /mydata
+exit
+kubectl create -f pv.yaml
+kubectl get pv
+kubectl create -f pvc.yaml
+kubectl get pvc 
+kubectl get pv
+-if you loose pod you need to make sure pvc is avalible
+kubectl create -f pv-pod.yaml
+kubectl describe pod pv-pod
+
+
+---------------------------------
+dynamic provesion
+- to dynamically provision a pv, a storageClass must be referd in pvc
+- are classes that are defined by the administrator
+    - storageType, backup type, QOS, or something else
+- sotrage classes also use provisioners that connect to specific sotrage type
+ - has it's own paramters
+- a default storage class can be used, others can be defined manually
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+    labels:
+    kubernetes.io/cluster-service: "true"
+    name: default
+paramters:
+    cachingmode: ReadOnly
+    kind: Managed
+    storageType: Standard_LRS
+provisioner: kubernetes.io/azureDisk
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+
+-provisioner is a key element in dynamic storage as it contaions 
+the code to create specific sotrage resourses
+- comes with some provisioners, most of which are 
+in public cloud env
+- paramters section contaions provisioner-specific paramters
+and explains how to connect to the actual storage
+
+- a default storageClass can be used to always specify 
+so that it doesn't have to be defined in PVC spec 
+- you will find default storageClass in Managed Kub env, like aks 
+
+- for default storageClass nothing has to be specificed in PVC def 
+- for customStorageClass is used to define a storageClass resouirces that bninds to sotrage
+- you will need to setup provisioner to allow access to specific storage. (think cloud creds)
+- once defined, the custom storageClass can be accessed from the PVC
+
+------------------------------------
+Config Map 
+- providing configuration as a seperate API object in kub database
+that allows you to insert config into a pod
+- seperate configuration from code 
+- configMaps are clear-text, Secrets are base64 encoded
+- diffrent types can be used:
+ - files
+ - dirs
+ - literal
+- all associated data is stored in configMaps or Secret object
+- secrets to be puished vars
+
+kubectl create cm nginx-cm --from-file nginx-custom-config.conf
+kubectl create -f nginx-cm.yml
+kubectl exec -it nginx-cm -- cat /etc/nginx/conf.d/default.co
+nf
+
+--------------------------------
+-kub auto creates secrets that contains creds 
+for access the API, and auto modifys the pods, to use this Secret
+- use kubectl decribe pods <podname> and look at mount section to see them
+- while create secret, text vaule must be base64 encoded
+- when using kubectl create secret, this auto happens
+- when create a secret from YAML you will need to use base64 utility
+to generate the encoded string and use that in yaml
+
+- from pods, secrets are used in same way as configMaps
+-mount as volumes
+- import as vars 
+
+kubectl create secret generic secretstuff --from-literal=password=password --from-literal=users=linda
+kubectl get secret secretstuff -o yaml
+kubectl create -f pod-secret.yaml
+kubectl get pod secretbox2
+kubectl describe pod secretbox2
+kubectl get pods secretbox2 -o yaml
+kubectl exec -it secretbox2 -- /bin/sh
+    cat secretstuff/password
+    cat secretstuff/users
+kubectl create secret generic mysql --from-literal=password=root
+kubectl explain pod.spec.containers.env.valueFrom  
+kubectl create -f pod-secret-as-var.yaml
+kubectl exec -it mymysql -- /bin/sh
+env

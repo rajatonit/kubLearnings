@@ -1,0 +1,149 @@
+-all pods are naked pods
+- no good way to start a pod from command line
+-use yaml manafest
+kubectl create -f mypod.yaml
+-following items:
+apiversion
+kind
+metadata
+spec
+-use kubectl explain
+
+kubectl get pods
+- shows running pods
+
+kubectl describe pods
+kubectl describe pod <podName>
+- shows details about pods and how behaving in cluster config
+status section - comming from kub database (to analze what is happening)
+
+kubectl get pods <podname> -o yaml 
+- shows yaml spec of pods running in etcd database
+
+kubectl delete pods mypod
+-delete pod
+kubectl delete pods <podname> --grace-period=0 --force
+- delete right away
+if pods dose not delete right away its managed by something else
+
+kubectl delete -f yamlFile
+
+-------------------------------------------------------------
+
+deployments
+-standard for running applications. Whenever you create anything creates deployument
+- uses to manage pods
+- pods are started throuhg deployment "template" specifications
+-deployments add scalibility and avalibility to pod
+    - Replication (how many you want (replica-set))
+    -update-strategy 
+- deployments use labels to montior the avalibility of sufficent amount of pods
+
+labels
+- many kub api objects are using labels to connect to other objects
+-replicaSets monitors the pod label to verify a sufficent amount of pods are avalible
+-lables are set automatically when starting deployments
+kubectl label <labelWhat> <item> <labelName>
+kubectl label pod <podName> <labelName>
+Note: kubectl will make sure pod with label name will exist
+- to manual set label
+kubectl get all --show-labels
+kubectl get all --selector app=cmd-nginx
+-see all apps that carry the same label
+kubectl -f label pod <podName> <labelName>
+- remove label
+
+-----------------------------------------------------------
+Running deployments
+
+
+-running apps in a deployment is the standard
+- do not run naked pods
+kubectl create -f myapp.yaml 
+- create app from yaml
+kubectl create deployment myapp --image=myapp
+- create app from cmd
+kubectl explain deployment 
+--version of deployment api
+kubectl get deployment
+--get deployment
+kubectl get deployment --show-labels
+
+kubectl create -f redis-deploy.yaml
+kubectl get all --selector app=redis
+
+-------------------------------------------
+Namespaces
+-provide isolated env in a kub env
+-using Namespaces makes sense in env with multiple teams or projects
+- Namespaces can use resource quota to devide cluster resources between multiple users
+- name needs to be unique within Namespaces
+- by default, a default namespace and a kube-system namespace exist
+
+kubectl create namespace
+kubectl get --all-namespaces
+- use -n mynamespace foe what namespace you want to work in
+
+install optional kubectx package
+- can make switching namespace easy
+kubectx - switching context
+kubens - namespaces
+
+
+context
+- consits of clustername and namespace a current user connects to
+kubectl config get 
+- show current context
+- if multiplplie clusters are avalible, switching context is relivent
+- if multiple namespaces exist, switching namepaces is relivent
+
+kubenes is probs most convient
+kubectl get ns - is the otherway to do this
+
+- to show whats in namepaces
+kubectl get all -n kubernetes-dashboard
+kubectl get all -n kube-system  
+
+kubectl create ns myspace
+
+kubectl get pods --all-namepaces
+
+add namespace to metadata to deploy to namespace
+
+----------------------------------------------
+kubectl scale
+-- allows you to modify the number of replica for a current app
+kubectl edit
+- modify the etcd config to modify number of replicas
+
+you can also do in deployment specifications
+
+kubectl scale --replicas=3 deployment lab4-nginx
+
+---------------------------------
+ update/rollbacks
+ 
+ - major changes to deployment will have deployment history updated
+ - a new replica set is created, and old is maintaned with 0 pods
+- makes it easy to undo changes
+kubectl rollout history 
+- overview of recent changes
+kubectl rollout undo
+- to revert a change
+
+kubectl create deployment rollingnginx --image=nginx:1.8
+kubectl edit deployment rollingnginx
+kubectl rollout history deployment
+kubectl describe deployment rollingnginx 
+kubectl rollout history deployment rollingnginx --revision=1
+kubectl rollout undo deployment rollingnginx --to-revision=1
+kubectl explain deployment.spec
+
+--- lab
+kubectl create deployment lab5-nginx --image=nginx --dry-run --output=yaml
+kubectl create -f lab5-nginx.yaml
+kubectl get deployment
+kubectl get deployment --selector app=lab5-nginx
+kubectl scale deployment lab5-nginx --replicas=4
+kubectl edit deployments lab5-nginx
+kubectl get all --selector app=lab5-nginx

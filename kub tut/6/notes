@@ -1,0 +1,87 @@
+kub networking
+
+- every pod has it's own internal ip
+and managed by deployment
+-there is this thing called service that is connected to deployment by label
+-service object is distributed by deployment to diffrent pods
+-think as load balencer
+ingress
+- https,https
+-used to provide url access to service object
+- can be connected to multiple service object
+-if you don't use https/http then you can use service object to expose
+
+-------------------------------------------------------------------
+kubectl create -f busybox-ns.yaml
+kubectl get pods -o wide
+kubectl describe pod verybusy
+kubectl exec -it verybusy -c busy /bin/sh
+ip a
+kubectl exec -it verybusy -c box /bin/sh
+- same ips why? 
+- Containers are running witin pod, and use pod ip address
+-inside pod there is no networking
+
+--------------------------------------------------------------
+service objects are connected to pods by label
+has some important items
+ip address - what to run on
+target port - what port to listen on 
+enpoints - ip adress of pods
+
+On the pods itself. They are running kube proxy
+kube proxy creates ip tables and forwards traffic to pods enpoints 
+kube-proxy will run on physical nodes
+
+this creates virtual load balencer
+
+Service types.
+There are diffrent types avalible
+ClusterIp: the default type; provides internal access only (you need to put a load balencer in front of it)
+NodePort: allocates a specific node port that needs to be opened on firewall. A specific node port is open and provide access to service
+LoadBalencer: currently only implmented in public cloud ( you get a public ip)
+ExternalName: Happening on a DNS level
+Service without a selector: use for conenctions based on IP/Port without an enpoint. useful for conenctions to database, or namespaces
+
+port == what we see
+target Port == what on container
+
+kubectl expose -h
+kubectl expose deployment nginx --port=8080 --target-port=80
+kubectl get svc
+kubectl describe svc nginx
+kubectl scale deployment nginx --replicas=4
+kubectl describe svc nginx
+kubectl expose deployment nginx --port=80 --target-port=80 --dry-run -o yaml > nginx.yaml
+
+------------------------------
+DNS
+- kube creates DNS
+kubectl get pods -n kube-system
+coredns - is default kube DNS system and used by all pods
+kubectl exec -it busybox -- nslookup kubernetes
+kubectl exec -it busybox -- nslookup nginx
+- when you create pod, kub automatically inserts DNS config
+kubectl exec -it busybox -- cat /etc/resolv.conf
+
+---------------------------------------------
+ingress
+- exposes HTTP and HTTPS routes to services running inside a ClusterIp
+- allows service to be reachable using url
+- ingress can load balence
+- can take care of TLS/SSL
+
+- you need ingress controller to do work
+- Only exposes HTTP/HTTPS. You need the NodePort or LoadBalencer service type of others
+
+ minikube addons list
+ minikube addons enable ingress
+ minikube addons enable ingress-dns
+
+
+kubectl expose service nginx --port=443 --target-port=8443 --name=nginx-https
+
+ kubectl create -f nginx-in.yaml
+  kubectl get ingress
+
+  ---------------------
